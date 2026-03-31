@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>The Midnight Quest</title>
+<style>
+body{margin:0;background:#1a0033;color:#ccff00;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+#game{text-align:center;padding-top:20px}
+h1{color:#39ff14;text-shadow:0 0 15px #39ff14}
+.progress-container{width:80%;margin:10px auto}
+.bar{height:22px;background:#333;border-radius:12px;overflow:hidden;margin-bottom:10px}
+.fill{height:100%;width:0%;background:linear-gradient(90deg,#39ff14,#ffff33)}
+button{background:#111;color:#39ff14;border:2px solid #39ff14;padding:10px 20px;margin:10px;border-radius:8px;cursor:pointer}
+button:hover{background:#39ff14;color:#000}
+#playAgain{position:fixed;bottom:20px;left:50%;transform:translateX(-50%)}
+.house{position:fixed;bottom:0;left:50%;transform:translateX(-50%);opacity:0.2}
+</style>
+</head>
+<body>
+<div id="game">
+<h1>🌙 The Midnight Quest</h1>
+<div class="progress-container">
+<div>YOU</div>
+<div class="bar"><div id="playerBar" class="fill"></div></div>
+<div>Dark Owl</div>
+<div class="bar"><div id="comp1" class="fill"></div></div>
+<div>Night Panther</div>
+<div class="bar"><div id="comp2" class="fill"></div></div>
+</div>
+<div id="level"></div>
+<div id="question"></div>
+<div id="options"></div>
+</div>
+<svg class="house" width="600" height="300">
+<polygon points="100,250 300,80 500,250" fill="#000"/>
+<rect x="150" y="250" width="300" height="200" fill="#000"/>
+</svg>
+<button id="playAgain" onclick="resetGame()">Play Again</button>
+<script>
+let player=0,comp1=25,comp2=30,step=0,currentCorrect=0;
+
+const questions=[
+{level:1,q:"It is midnight. The owl is in a happy mood. Do you WAIT and solve her questions or AWAKEN her (dance + pay money)?",answers:["Wait and solve questions","Awaken the owl"],correct:0},
+{level:1,q:"You got the map! Do you FOLLOW your competitors silently OR steal the map and risk being haunted?",answers:["Follow silently","Steal the map"],correct:0},
+{level:1,q:"You failed to find the map directly. Go to DUNGEONS for clues OR take mystical books for duplicate map?",answers:["Dungeons","Mystical Books"],correct:0},
+{level:2,q:"To use the map, play MUSIC (alert competitors) OR make a MAGIC POTION and RHYME?",answers:["Magic potion and rhyme","Play music"],correct:0},
+{level:2,q:"Inside library: choose a BOOK and SPEAK to wizard OR leave with helper owl?",answers:["Speak to wizard","Leave quickly"],correct:0},
+{level:2,q:"Competitors arrive. HAND OVER book, RUN AWAY or FIGHT?",answers:["Run away","Hand over","Fight"],correct:0},
+{level:3,q:"Summon WITCH + GHOST OR go update the owl?",answers:["Summon both","Go to owl"],correct:0},
+{level:3,q:"Pour potion by pouring on LOCATION OR spend 5 hours ritual?",answers:["Pour on location","Do ritual"],correct:0},
+{level:3,q:"Grab gem quickly OR steal from competitor later?",answers:["Grab gem","Steal later"],correct:0}
+];
+
+function shuffleAnswers(arr,correctIndex){
+let a=arr.map((v,i)=>({v,i}));
+a.sort(()=>Math.random()-0.5);
+currentCorrect=a.findIndex(x=>x.i===correctIndex);
+return a.map(x=>x.v);
+}
+
+function updateBars(){
+player=Math.min(player,100);comp1=Math.min(comp1,100);comp2=Math.min(comp2,100);
+document.getElementById('playerBar').style.width=player+'%';
+document.getElementById('comp1').style.width=comp1+'%';
+document.getElementById('comp2').style.width=comp2+'%';
+if(comp1>=100||comp2>=100){alert('A competitor reached the gem first! Game Over');resetGame();}
+}
+
+function competitorRush(){
+comp1+=3+Math.random()*4;
+comp2+=3.5+Math.random()*4.5;
+updateBars();
+}
+setInterval(competitorRush,1000);
+
+function nextQuestion(){
+if(step>=questions.length){alert('YOU FOUND THE GEM!');confetti();return}
+let obj=questions[step];
+document.getElementById('level').innerText='Level '+obj.level;
+document.getElementById('question').innerText=obj.q;
+let shuffled=shuffleAnswers(obj.answers,obj.correct);
+let optDiv=document.getElementById('options');optDiv.innerHTML='';
+shuffled.forEach((txt,i)=>{
+let btn=document.createElement('button');btn.innerText=txt;
+btn.onclick=()=>choose(i);
+optDiv.appendChild(btn);
+});}
+
+function choose(i){
+if(i===currentCorrect){player+=12;confetti();step++;nextQuestion();}
+else{alert('Wrong decision! Game Over');resetGame();}
+updateBars();}
+
+function confetti(){
+for(let i=0;i<180;i++){
+let c=document.createElement('div');
+c.style.position='fixed';
+c.style.width='8px';
+c.style.height='8px';
+c.style.background='hsl('+Math.random()*360+',100%,50%)';
+c.style.top='-10px';
+c.style.left=(50 + (Math.random()*60-30))+'%';
+c.style.borderRadius=Math.random()>0.5?'50%':'2px';
+document.body.appendChild(c);
+let speed=3+Math.random()*4;
+let drift=(Math.random()*6-3);
+let rotate=Math.random()*360;
+let fall=setInterval(()=>{
+let top=parseFloat(c.style.top);
+let left=parseFloat(c.style.left);
+c.style.top=(top+speed)+'px';
+c.style.left=(left+drift)+'%';
+c.style.transform='rotate('+ (rotate+=10) +'deg)';
+if(top>window.innerHeight){clearInterval(fall);c.remove();}
+},20);
+}
+}
+
+function resetGame(){player=0;comp1=25;comp2=30;step=0;updateBars();nextQuestion();}
+updateBars();nextQuestion();
+</script>
+</body>
+</html>
