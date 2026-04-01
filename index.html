@@ -6,14 +6,14 @@
 <style>
 body{margin:0;background:#1a0033;color:#ccff00;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
 #game{text-align:center;padding-top:20px}
-h1{color:#39ff14;text-shadow:0 0 15px #39ff14;font-size:56px}
-#level{font-size:32px;margin-top:10px}
-#question{font-size:34px;margin-top:20px;padding:0 40px}
-#message{font-size:28px;margin-top:20px;color:#ffff33}
-button{background:#111;color:#39ff14;border:2px solid #39ff14;padding:12px 24px;margin:12px;border-radius:8px;cursor:pointer;font-size:18px}
+h1{color:#39ff14;text-shadow:0 0 15px #39ff14;font-size:64px}
+#level{font-size:36px;margin-top:10px}
+#question{font-size:38px;margin-top:20px;padding:0 40px}
+button{background:#111;color:#39ff14;border:2px solid #39ff14;padding:14px 26px;margin:14px;border-radius:8px;cursor:pointer;font-size:20px}
 button:hover{background:#39ff14;color:#000}
+#result{font-size:34px;margin-top:25px}
 #playAgain{position:fixed;bottom:20px;left:50%;transform:translateX(-50%)}
-.house{position:fixed;bottom:0;left:50%;transform:translateX(-50%);opacity:0.2}
+.house{position:fixed;bottom:0;left:50%;transform:translateX(-50%);opacity:0.2;pointer-events:none;z-index:-1}
 </style>
 </head>
 <body>
@@ -22,52 +22,81 @@ button:hover{background:#39ff14;color:#000}
 <div id="level"></div>
 <div id="question"></div>
 <div id="options"></div>
-<div id="message"></div>
+<div id="result"></div>
 </div>
+
 <svg class="house" width="600" height="300">
 <polygon points="100,250 300,80 500,250" fill="#000"/>
 <rect x="150" y="250" width="300" height="200" fill="#000"/>
 </svg>
+
 <button id="playAgain" onclick="resetGame()">Play Again</button>
+
 <script>
-let step=0,currentCorrect=0;
+let step=0,locked=false;
 
 const questions=[
-{level:1,q:"It is midnight. The owl is in a happy mood. Do you WAIT and solve her questions or AWAKEN her (dance + pay money)?",answers:["Wait and solve questions","Awaken the owl"],correct:0},
-{level:1,q:"You got the map! Do you FOLLOW your competitors silently OR steal the map and risk being haunted?",answers:["Follow silently","Steal the map"],correct:0},
-{level:1,q:"You failed to find the map directly. Go to DUNGEONS for clues OR take mystical books for duplicate map?",answers:["Dungeons","Mystical Books"],correct:0},
-{level:2,q:"To use the map, play MUSIC (alert competitors) OR make a MAGIC POTION and RHYME?",answers:["Magic potion and rhyme","Play music"],correct:0},
-{level:2,q:"Inside library: choose a BOOK and SPEAK to wizard OR leave with helper owl?",answers:["Speak to wizard","Leave quickly"],correct:0},
-{level:2,q:"Competitors arrive. HAND OVER book, RUN AWAY or FIGHT?",answers:["Run away","Hand over","Fight"],correct:0},
-{level:3,q:"Summon WITCH + GHOST OR go update the owl?",answers:["Summon both","Go to owl"],correct:0},
-{level:3,q:"Pour potion by pouring on LOCATION OR spend 5 hours ritual?",answers:["Pour on location","Do ritual"],correct:0},
-{level:3,q:"Grab gem quickly OR steal from competitor later?",answers:["Grab gem","Steal later"],correct:0}
+{level:1,q:"It is midnight and the owl is in a happy mood. If you awaken her, you must dance and pay money and competitors will rush in. Do you WAIT and solve her questions OR AWAKEN her?",options:[
+{text:"Wait and solve questions",correct:true},
+{text:"Awaken the owl",correct:false}
+]},
+{level:1,q:"You have the map. If you steal it a ghost will haunt you. Do you FOLLOW competitors silently OR STEAL the map?",options:[
+{text:"Follow competitors silently",correct:true},
+{text:"Steal the map",correct:false}
+]},
+{level:1,q:"You can go to the dungeons for clues OR you can try and take some mystical books which might have a duplicate map. The books are faster but riskier and the dungeons are slower but easier",options:[
+{text:"Go to dungeons",correct:true},
+{text:"Take mystical books",correct:false}
+]},
+{level:2,q:"To use the map, playing music will alert competitors OR making a magic potion and rhyme is safer. What do you do?",options:[
+{text:"Magic potion and rhyme",correct:true},
+{text:"Play music",correct:false}
+]},
+{level:2,q:"In the enchanted library, if you leave without speaking to the wizard you will get lost. What do you do?",options:[
+{text:"Speak to wizard",correct:true},
+{text:"Leave quickly",correct:false}
+]},
+{level:2,q:"Competitors arrive. Handing over the book or fighting means losing. What is your move?",options:[
+{text:"Run away",correct:true},
+{text:"Hand over book",correct:false},
+{text:"Fight",correct:false}
+]},
+{level:3,q:"To make the potion, you must summon both witch and ghost. Updating the owl wastes time. Choose wisely.",options:[
+{text:"Summon witch and ghost",correct:true},
+{text:"Go update owl",correct:false}
+]},
+{level:3,q:"The potion must not touch the gem. Pouring on the location works but the ritual takes 5 hours. What do you do?",options:[
+{text:"Pour on location",correct:true},
+{text:"Do ritual",correct:false}
+]},
+{level:3,q:"Competitors are near. If you wait to steal later a ghost will haunt you. Final move?",options:[
+{text:"Grab gem quickly",correct:true},
+{text:"Steal later",correct:false}
+]}
 ];
 
-function shuffleAnswers(arr,correctIndex){
-let a=arr.map((v,i)=>({v,i}));
-a.sort(()=>Math.random()-0.5);
-currentCorrect=a.findIndex(x=>x.i===correctIndex);
-return a.map(x=>x.v);
-}
+function shuffle(arr){return arr.sort(()=>Math.random()-0.5)}
 
 function nextQuestion(){
-if(step>=questions.length){document.getElementById('message').innerText='You found the gem!';confetti();return}
+
+if(step>=questions.length){document.getElementById('result').innerText='You won!!';confetti();return}
 let obj=questions[step];
-document.getElementById('message').innerText='';
 document.getElementById('level').innerText='Level '+obj.level;
 document.getElementById('question').innerText=obj.q;
-let shuffled=shuffleAnswers(obj.answers,obj.correct);
+document.getElementById('result').innerText='';
 let optDiv=document.getElementById('options');optDiv.innerHTML='';
-shuffled.forEach((txt,i)=>{
-let btn=document.createElement('button');btn.innerText=txt;
-btn.onclick=()=>choose(i);
+shuffle(obj.options).forEach(opt=>{
+let btn=document.createElement('button');btn.innerText=opt.text;
+btn.onclick=()=>choose(opt);
 optDiv.appendChild(btn);
 });}
 
-function choose(i){
-if(i===currentCorrect){confetti();step++;nextQuestion();}
-else{document.getElementById('message').innerText='Game Over';}}
+function choose(opt){
+if(locked) return; locked=true;
+if(!opt.correct){document.getElementById('result').innerText='Game Over';return}
+confetti();step++;setTimeout(()=>{locked=false;nextQuestion();},1000);
+}
+
 
 function confetti(){
 for(let i=0;i<180;i++){
@@ -78,23 +107,19 @@ c.style.height='8px';
 c.style.background='hsl('+Math.random()*360+',100%,50%)';
 c.style.top='-10px';
 c.style.left=(50 + (Math.random()*60-30))+'%';
-c.style.borderRadius=Math.random()>0.5?'50%':'2px';
 document.body.appendChild(c);
 let speed=3+Math.random()*4;
 let drift=(Math.random()*6-3);
-let rotate=Math.random()*360;
 let fall=setInterval(()=>{
 let top=parseFloat(c.style.top);
 let left=parseFloat(c.style.left);
 c.style.top=(top+speed)+'px';
 c.style.left=(left+drift)+'%';
-c.style.transform='rotate('+ (rotate+=10) +'deg)';
 if(top>window.innerHeight){clearInterval(fall);c.remove();}
 },20);
-}
-}
+}}
 
-function resetGame(){step=0;document.getElementById('message').innerText='';nextQuestion();}
+function resetGame(){step=0;locked=false;nextQuestion();}
 nextQuestion();
 </script>
 </body>
