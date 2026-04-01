@@ -6,11 +6,11 @@
 <style>
 body{margin:0;background:#1a0033;color:#ccff00;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
 #game{text-align:center;padding-top:20px}
-h1{color:#39ff14;text-shadow:0 0 15px #39ff14}
-.progress-container{width:80%;margin:10px auto}
-.bar{height:22px;background:#333;border-radius:12px;overflow:hidden;margin-bottom:10px}
-.fill{height:100%;width:0%;background:linear-gradient(90deg,#39ff14,#ffff33)}
-button{background:#111;color:#39ff14;border:2px solid #39ff14;padding:10px 20px;margin:10px;border-radius:8px;cursor:pointer}
+h1{color:#39ff14;text-shadow:0 0 15px #39ff14;font-size:56px}
+#level{font-size:32px;margin-top:10px}
+#question{font-size:34px;margin-top:20px;padding:0 40px}
+#message{font-size:28px;margin-top:20px;color:#ffff33}
+button{background:#111;color:#39ff14;border:2px solid #39ff14;padding:12px 24px;margin:12px;border-radius:8px;cursor:pointer;font-size:18px}
 button:hover{background:#39ff14;color:#000}
 #playAgain{position:fixed;bottom:20px;left:50%;transform:translateX(-50%)}
 .house{position:fixed;bottom:0;left:50%;transform:translateX(-50%);opacity:0.2}
@@ -19,17 +19,10 @@ button:hover{background:#39ff14;color:#000}
 <body>
 <div id="game">
 <h1>🌙 The Midnight Quest</h1>
-<div class="progress-container">
-<div>YOU</div>
-<div class="bar"><div id="playerBar" class="fill"></div></div>
-<div>Dark Owl</div>
-<div class="bar"><div id="comp1" class="fill"></div></div>
-<div>Night Panther</div>
-<div class="bar"><div id="comp2" class="fill"></div></div>
-</div>
 <div id="level"></div>
 <div id="question"></div>
 <div id="options"></div>
+<div id="message"></div>
 </div>
 <svg class="house" width="600" height="300">
 <polygon points="100,250 300,80 500,250" fill="#000"/>
@@ -37,7 +30,7 @@ button:hover{background:#39ff14;color:#000}
 </svg>
 <button id="playAgain" onclick="resetGame()">Play Again</button>
 <script>
-let player=0,comp1=25,comp2=30,step=0,currentCorrect=0;
+let step=0,currentCorrect=0;
 
 const questions=[
 {level:1,q:"It is midnight. The owl is in a happy mood. Do you WAIT and solve her questions or AWAKEN her (dance + pay money)?",answers:["Wait and solve questions","Awaken the owl"],correct:0},
@@ -58,24 +51,10 @@ currentCorrect=a.findIndex(x=>x.i===correctIndex);
 return a.map(x=>x.v);
 }
 
-function updateBars(){
-player=Math.min(player,100);comp1=Math.min(comp1,100);comp2=Math.min(comp2,100);
-document.getElementById('playerBar').style.width=player+'%';
-document.getElementById('comp1').style.width=comp1+'%';
-document.getElementById('comp2').style.width=comp2+'%';
-if(comp1>=100||comp2>=100){alert('A competitor reached the gem first! Game Over');resetGame();}
-}
-
-function competitorRush(){
-comp1+=3+Math.random()*4;
-comp2+=3.5+Math.random()*4.5;
-updateBars();
-}
-setInterval(competitorRush,1000);
-
 function nextQuestion(){
-if(step>=questions.length){alert('YOU FOUND THE GEM!');confetti();return}
+if(step>=questions.length){document.getElementById('message').innerText='You found the gem!';confetti();return}
 let obj=questions[step];
+document.getElementById('message').innerText='';
 document.getElementById('level').innerText='Level '+obj.level;
 document.getElementById('question').innerText=obj.q;
 let shuffled=shuffleAnswers(obj.answers,obj.correct);
@@ -87,9 +66,8 @@ optDiv.appendChild(btn);
 });}
 
 function choose(i){
-if(i===currentCorrect){player+=12;confetti();step++;nextQuestion();}
-else{alert('Wrong decision! Game Over');resetGame();}
-updateBars();}
+if(i===currentCorrect){confetti();step++;nextQuestion();}
+else{document.getElementById('message').innerText='Game Over';}}
 
 function confetti(){
 for(let i=0;i<180;i++){
@@ -116,8 +94,8 @@ if(top>window.innerHeight){clearInterval(fall);c.remove();}
 }
 }
 
-function resetGame(){player=0;comp1=25;comp2=30;step=0;updateBars();nextQuestion();}
-updateBars();nextQuestion();
+function resetGame(){step=0;document.getElementById('message').innerText='';nextQuestion();}
+nextQuestion();
 </script>
 </body>
 </html>
