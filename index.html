@@ -3,165 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Midnight Quest</title>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<title>Baby Town</title>
 <style>
-body{background:#1a0033;color:#39ff14;font-family:Arial;text-align:center;margin:0;overflow-x:hidden}
-h1{color:#faff00;margin-top:20px}
-#instructions{width:85%;margin:auto;margin-top:10px}
-#variables{border:2px solid #39ff14;padding:10px;display:flex;justify-content:space-around;margin:20px}
-.question{font-size:26px;font-weight:bold;margin-top:30px}
-.consequence{color:#faff00;margin-top:10px}
-button{font-size:22px;margin:14px;padding:12px 22px;background:black;color:#39ff14;border:2px solid #faff00;cursor:pointer}
-.playAgain{font-size:32px;margin:60px;padding:22px 44px}
-#gameover{position:fixed;top:-200px;left:0;right:0;background:black;color:red;font-size:45px;padding:20px;transition:1s}
-#witchFly{position:fixed;top:35%;left:-400px;width:280px;z-index:9999;pointer-events:none;display:none}
-@keyframes flyAcross{0%{left:-400px}100%{left:120%}}
-.fly{display:block !important;animation:flyAcross 9s linear}
+body{background:black;color:white;font-family:Arial,Helvetica,sans-serif;margin:0;text-align:center}
+.container{max-width:900px;margin:auto;padding:20px}
+h1{margin-top:10px}
+.box{border:2px solid white;border-radius:10px;padding:15px;margin:20px 0}
+button{background:black;color:white;border:2px solid white;padding:12px 18px;margin:8px;border-radius:8px;font-size:16px}
+button:disabled{opacity:.4}
+#gameOver{display:none;font-size:28px;margin-top:20px}
 </style>
 </head>
 <body>
-<h1>The Midnight Quest</h1>
-
-<div id="instructions">
-Mission: Find the precious mystical gemstone before your competitors. The journey is dangerous, so follow the conditions carefully or you’ll fail. Three mistakes and the game is over. The game has three levels—make the right choices to progress.
+<div class="container">
+<h1>Baby Town</h1>
+<p>The Baby should stay calm throughout the day and learn new things. Finish all tasks before time or energy runs out.</p>
+<div class="box"><h3>Variables</h3><p id="stats"></p></div>
+<div class="box">
+<h2 id="question"></h2>
+<p id="consequence"></p>
+<div id="options"></div>
 </div>
-
-<div id="variables">
-<div>Time: <span id="time">1:00</span></div>
-<div>Energy: <span id="energy">10</span> energy pts</div>
-<div>Food: 3 dishes per level</div>
+<div id="gameOver"><p>GAME OVER</p><button onclick="startGame()">Play Again</button></div>
 </div>
-
-<img id="witchFly" src="https://i.imgur.com/3ZQ3Z4R.png">
-
-<div id="game"></div>
-<button class="playAgain" onclick="startGame()">Play Again</button>
-
-<div id="gameover">💀 GAME OVER 💀<div id="reason"></div></div>
-
 <script>
-let level=1,step=0,timer,timeLeft=60,energy=10;
-
-function startTimer(){
- clearInterval(timer);
- timeLeft=60;
- timer=setInterval(()=>{
-  timeLeft--;
-  let m=Math.floor(timeLeft/60);
-  let s=timeLeft%60;
-  time.innerText=m+":"+(s<10?'0':'')+s;
-  if(timeLeft<=0)gameOver('You ran out of time');
- },1000)
-}
-
-function confettiBlast(){
- confetti({particleCount:150,spread:160,origin:{y:0.2}})
-}
-
-function shuffle(a){
- for(let i=a.length-1;i>0;i--){
-  const j=Math.floor(Math.random()*(i+1));
-  [a[i],a[j]]=[a[j],a[i]];
- }
- return a;
-}
-
-function gameOver(msg){
- reason.innerText=msg;
- gameover.style.top='0';
-}
-
-function startGame(){
- gameover.style.top='-200px';
- level=1;
- step=0;
- energy=10;
- document.getElementById('energy').innerText=energy;
- nextStep();
-}
-
-function useEnergy(){
- energy--;
- document.getElementById('energy').innerText=energy;
- if(energy<=0)gameOver('You ran out of energy!');
-}
-
-function flyWitch(){
- const w=document.getElementById('witchFly');
- w.classList.remove('fly');
- void w.offsetWidth;
- w.classList.add('fly');
-}
-
-function showOptions(options,correct){
- let g=game;
- shuffle(options).forEach(opt=>{
-  let b=document.createElement('button');
-  b.innerText=opt;
-  b.onclick=()=>{
-   useEnergy();
-   if(opt===correct){
-    confettiBlast();
-    step++;
-    nextStep();
-   }else gameOver('You made the wrong choice: '+opt);
-  };
-  g.appendChild(b);
- })
-}
-
-function nextStep(){
- startTimer();
- game.innerHTML='';
-
-if(level===1 && step===0){
- game.innerHTML=`<div class='question'>In order to get books, you must find a map. Owl is sleeping and it is midnight = map Owl grumpy mood if you wake owl up = Dance for owl to make owl happy You dance = competitors rush to spot If competitors take the test first, a ghost will haunt you. Make sure to quickly take the test</div>`;
- showOptions(['Dance for owl to make owl happy','Wait for owl'],'Wait for owl');
- return;
-}
-
-if(level===1 && step===1){
- game.innerHTML=`<div class='question'>Map = Lost THEN - Go to dungeons to look for clues OR flip through mystical books</div><div class='consequence'>Dungeons = They might be traps Mystical Books - Is less riskier and easier to do</div>`;
- showOptions(['Go to dungeons to look for clues','flip through mystical books'],'flip through mystical books');
- level=2; step=0; return;
-}
-
-if(level===2 && step===0){ flyWitch();
- game.innerHTML=`<div class='question'>To use map = You can play some music OR You can summon a ghost and a witch to make a potion.</div><div class='consequence'>If you choose the first one, your competitors will take the map away. If you choose the second one, you will get constant advice from a witch.</div>`;
- showOptions(['You can play some music','You can summon a ghost and a witch to make a potion'],'You can summon a ghost and a witch to make a potion');
- return;
-}
-
-if(level===2 && step===1){
- game.innerHTML=`<div class='question'>Map → Enchanted library In the library = You cannot get out until you choose a book or a map IF you can’t find anything meaningful, you will have to sneak out.</div><div class='consequence'>The first one’s consequence is that you will have extra weight. The second one’s consequence is that you will be restricted to the library forever.</div>`;
- showOptions(['Choose book','Choose map'],'Choose book');
- return;
-}
-
-if(level===2 && step===2){
- game.innerHTML=`<div class='question'>Enchanted book = Map that leads to gem You can follow the map and risk the dangers of getting the gem at midnight OR You can wait and risk getting caught by your competitors.</div><div class='consequence'>The first one’s consequence is that you might stumble upon ogres, witches, and phantoms. The second one’s consequence is that you will risk getting the map lost and never getting the gem.</div>`;
- showOptions(['You can follow the map and risk the dangers of getting the gem at midnight','You can wait and risk getting caught by your competitors.'],'You can follow the map and risk the dangers of getting the gem at midnight');
- level=3; step=0; return;
-}
-
-if(level===3 && step===0){ flyWitch();
- game.innerHTML=`<div class='question'>Precious gem = Ghost and witch OR Update owl OR ask help from owl.</div><div class='consequence'>If you ask help from the Ghost and Witch, they will keep roaming around with you. If you ask help from the owl, you will have to spend a lot of time making a potion.</div>`;
- showOptions(['Ask help from the Ghost and Witch','Update owl','ask help from owl'],'Ask help from the Ghost and Witch');
- return;
-}
-
-if(level===3 && step===1){
- game.innerHTML=`<div class='question'>Potion should NOT touch the gem. You can either pour it on the location or spend 5 hours doing a ritual.</div><div class='consequence'>If you pour the potion on the location, the potion might go somewhere else. If you do the ritual, it will take all your time and your competitors will easily catch up to you.</div>`;
- showOptions(['pour it on the location','spend 5 hours doing a ritual'],'pour it on the location');
- return;
-}
-
-if(level===3 && step===2){
- game.innerHTML='<h2 style="color:#faff00">🎉 YOU FOUND THE PRECIOUS MYSTICAL GEMSTONE! YOU WIN! 🎉</h2>';
- confettiBlast();
-}
-}
+var time,energy,index,gameActive; // time in minutes
+function formatTime(mins){var h=Math.floor(mins/60);var m=mins%60;return h+"h "+m+"m";}
+var tasks=[
+{q:"Baby woke up hungry. What should you do?",c:"Option 1: You do the right thing and lose 30 minutes and 10 pts. Option 2: You lose 1 hour and 20 pts. Option 3: Baby eats but teeth stay dirty so you lose 1 hour and 20 pts.",opts:[
+{t:"Make her brush and eat food",time:-30,energy:-10},{t:"Tell her to play",wrong:true},{t:"Make her directly eat",time:-60,energy:-20}
+]},
+{q:"Bath vs play outside first?",c:"Bath first: Baby gets dirty again and 1 hour and 40 pts are lost. Play first: Bath water gets cold but baby stays clean, lose 1 hour and 10 pts. Neither: Baby does nothing.",opts:[
+{t:"Bath first",wrong:true},{t:"Play first",time:-60,energy:-10},{t:"Neither",wrong:true}
+]},
+{q:"Baby cranky while you want bath?",c:"Take baby out: Baby gets tanned and 1 hour and 40 pts lost. Eat breakfast first: Baby cries and 30 mins and 20 pts lost. Distract then bath: Baby happy, lose 30 mins and 10 pts.",opts:[
+{t:"Take the baby out",wrong:true},{t:"Eat breakfast first",wrong:true},{t:"Distract baby then take bath",time:-30,energy:-10}
+]},
+{q:"Baby crying near nap time?",c:"Distract: Baby overtired, lose 1 hour and 10 pts. Sleep: Lose 1 hour and 30 pts but gain 3 hours and 20 pts. Feed food: Lose 1 hour and 10 pts.",opts:[
+{t:"Distract",wrong:true},{t:"Make her sleep",time:120,energy:20},{t:"Feed food",wrong:true}
+]},
+{q:"Baby woke up hungry before park?",c:"Feed lunch: Lose 30 mins. Park quickly: Lose 1 hour and 10 pts. Sleep again: Lose 30 mins and 10 pts.",opts:[
+{t:"Feed her lunch",time:-30,energy:0},{t:"Quickly take her to park",wrong:true},{t:"Make her sleep again",wrong:true}
+]},
+{q:"Park empty and baby crying?",c:"Play with her: Lose 30 mins and 10 pts. Calm her: Lose 1 hour and 20 pts. Go home: Lose 30 mins and 20 pts.",opts:[
+{t:"Play with her",time:-30,energy:-10},{t:"Calm her down",wrong:true},{t:"Go home",wrong:true}
+]},
+{q:"Dinner and play order?",c:"Dinner then play: Lose 30 mins and gain 30 pts. Play then dinner: Lose 30 mins and 10 pts. Something else: Lose 1 hour and 20 pts.",opts:[
+{t:"Dinner then play",time:-30,energy:30},{t:"Play then dinner",wrong:true},{t:"Something else",wrong:true}
+]},
+{q:"Baby energetic at bedtime?",c:"Sing lullaby: Lose 30 mins and 10 pts. Massage feet: Lose 10 mins and 5 pts. Warm bath: Lose 1 hour and 20 pts.",opts:[
+{t:"Sing lullaby",wrong:true},{t:"Massage feet",time:-10,energy:-5},{t:"Warm bath",wrong:true}
+]}
+];
+function startGame(){time=720;energy=300;index=0;gameActive=true;document.getElementById('gameOver').style.display='none';nextTask();}
+function updateStats(){document.getElementById('stats').innerHTML="Time Left: "+formatTime(time)+" | Energy: "+energy;}
+function nextTask(){if(!gameActive)return;if(index>=tasks.length){endGame(true);return;}updateStats();var task=tasks[index];document.getElementById('question').innerHTML=task.q;document.getElementById('consequence').innerHTML=task.c;var optDiv=document.getElementById('options');optDiv.innerHTML='';for(var i=0;i<task.opts.length;i++){(function(){var o=task.opts[i];var b=document.createElement('button');b.innerHTML=o.t;b.onclick=function(){choose(o);};optDiv.appendChild(b);})();}}
+function choose(o){if(!gameActive)return;if(o.wrong){endGame(false);return;}time+=o.time;energy+=o.energy;if(time<=0||energy<=0){endGame(false);return;}index++;nextTask();}
+function endGame(win){gameActive=false;var btns=document.querySelectorAll('#options button');for(var i=0;i<btns.length;i++){btns[i].disabled=true;}document.getElementById('gameOver').style.display='block';document.querySelector('#gameOver p').innerHTML= win?"YOU WON":"GAME OVER";}
 startGame();
 </script>
 </body>
